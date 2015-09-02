@@ -4,42 +4,68 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strings"
 	"time"
 )
 
+// Handling a particular TCP connection.
+func handleTCPConnection(conn *net.TCPConn) {
+	defer conn.Close()
+	buffer := make([]byte, 512)
+	for {
+		rlen, err := conn.Read(buffer)
+		if err != nil {
+			fmt.Println("Failed to read from TCP socket: " + err.Error())
+			return
+		}
+
+		if rlen > 0 {
+			strs := strings.Split(strings.TrimSpace(string(buffer[:2])), "\n")
+			for _, v := range strs {
+				err = HandleMessage(v)
+				if err != nil {
+					fmt.Println("Failed to handle message \"" + v + "\": " + err.Error())
+				}
+			}
+		}
+
+		buffer = make([]byte, 64)
+		time.Sleep(10 * time.Millisecond)
+	}
+}
+
+// The backend function to start the server.
 func realStart(handleErrors bool) error {
-	addr := net.UDPAddr{
+	addr := net.TCPAddr{
 		Port: 3000,
 		IP:   net.ParseIP("127.0.0.1"),
 	}
 
 	// Creating a connection.
-	conn, err := net.ListenUDP("udp", &addr)
-	defer conn.Close()
+	listener, err := net.ListenTCP("tcp", &addr)
 	if err != nil {
 		if !handleErrors {
 			return err
 		}
 
 		// Handling the error itself.
-		fmt.Println("Failed to open UDP listener: " + err.Error())
+		fmt.Println("Failed to open TCP listener: " + err.Error())
 		os.Exit(1)
 	}
-	defer conn.Close()
+	defer listener.Close()
 
-	var buffer []byte
 	for {
-		rlen, err := conn.Read(buffer)
+		conn, err := listener.AcceptTCP()
 		if err != nil {
-			fmt.Println("Failed to read buffer information: " + err.Error())
-			continue
+			if !handleErrors {
+				return err
+			}
+
+			fmt.Println("Failed to accept TCP connection: " + err.Error())
+			os.Exit(1)
 		}
 
-		if rlen > 0 {
-			fmt.Println(string(buffer))
-		}
-
-		time.Sleep(32 * time.Millisecond)
+		go handleTCPConnection(conn)
 	}
 
 	return nil

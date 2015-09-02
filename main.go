@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/crockeo/go-tuner/server"
 	"os"
-	"time"
 )
 
 // Printing out help information for the user.
