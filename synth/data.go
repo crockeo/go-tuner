@@ -151,3 +151,29 @@ func GuitarNote(duration, volume, frequency float64) NoteData {
 		},
 	}
 }
+
+// Type DelayedNoteData is a container that houses the delay and the note data
+// for a given note.
+type DelayedNoteData struct {
+	Delay float64
+	ND    NoteData
+}
+
+// Type NoteArrangement is a synonym for an array of structs, one being the
+// delay from the last note, the other being the associaed NoteData for this
+// note.
+type NoteArrangement []DelayedNoteData
+
+// Creating an empty NoteArrangement.
+func EmptyNoteArrangement() *NoteArrangement {
+	na := new(NoteArrangement)
+	return na
+}
+
+// Adding a piece of NoteData to a NoteArrangement at a certain delay.
+func (na *NoteArrangement) AddNoteData(delay float64, nd NoteData) {
+	_ = append(*na, DelayedNoteData{
+		Delay: delay,
+		ND:    nd,
+	})
+}

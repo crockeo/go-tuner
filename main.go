@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/crockeo/go-tuner/server"
+	"github.com/crockeo/go-tuner/synth"
 	"os"
 )
 
@@ -14,6 +15,16 @@ func printHelp() {
 	fmt.Println(" go-tuner visualize <file/path>")
 }
 
+// Handling er
+func handleErrors(errChannel chan error) {
+	for {
+		err := <-errChannel
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+	}
+}
+
 // The entry point to the application.
 func main() {
 	if len(os.Args) < 2 || os.Args[1] == "help" {
@@ -22,9 +33,15 @@ func main() {
 	}
 
 	if os.Args[1] == "server" {
-		err := server.Start(false)
+		errChannel := make(chan error)
+		noteChannel := make(chan synth.DelayedNoteData)
+
+		go server.Start(errChannel, noteChannel)
+		go handleErrors(errChannel)
+
+		err := synth.StartDynamicSynth(noteChannel)
 		if err != nil {
-			fmt.Println("Failed to start server: " + err.Error())
+			fmt.Println(err.Error())
 		}
 	} else if os.Args[1] == "file" {
 		fmt.Println("File not yet implemented.")
