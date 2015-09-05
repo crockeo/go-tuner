@@ -1,23 +1,17 @@
 package synth
 
 import (
-	"errors"
 	"time"
 )
 
-// Starting the synth with static synth data.
-func StartStaticSynth(na *NoteArrangement) error {
+// Starting a synth with a beginning note arrangement.
+func StartSynthWith(na *NoteArrangement, noteChannel chan DelayedNoteData) error {
+	var pd *PrimaryDriver
 	if na == nil {
-		return errors.New("Cannot work with a nil NoteArrangement.")
+		pd = NewPrimaryDriverEmpty()
+	} else {
+		pd = NewPrimaryDriver(*na)
 	}
-	pd := NewPrimaryDriver(*na)
-
-	return RunSynth(pd)
-}
-
-// Starting the synth with a channel for note data.
-func StartDynamicSynth(noteChannel chan DelayedNoteData) error {
-	pd := NewPrimaryDriverEmpty()
 
 	errChannel := make(chan error)
 	defer close(errChannel)
@@ -25,7 +19,7 @@ func StartDynamicSynth(noteChannel chan DelayedNoteData) error {
 	exitChannel := make(chan bool)
 	defer close(exitChannel)
 
-	go RunSynthAsync(pd, errChannel, exitChannel)
+	go RunSynth(pd, errChannel, exitChannel)
 	for {
 		select {
 		case err := <-errChannel:
@@ -43,4 +37,9 @@ func StartDynamicSynth(noteChannel chan DelayedNoteData) error {
 
 	exitChannel <- true
 	return nil
+}
+
+// Starting the synth with a channel for note data.
+func StartSynth(noteChannel chan DelayedNoteData) error {
+	return StartSynthWith(nil, noteChannel)
 }

@@ -33,14 +33,14 @@ func main() {
 		return
 	}
 
+	errChannel := make(chan error, 8)
+	noteChannel := make(chan synth.DelayedNoteData, 32)
+
+	go handleErrors(errChannel)
+	go server.Start(errChannel, noteChannel)
+
 	if os.Args[1] == "server" {
-		errChannel := make(chan error)
-		noteChannel := make(chan synth.DelayedNoteData)
-
-		go server.Start(errChannel, noteChannel)
-		go handleErrors(errChannel)
-
-		err := synth.StartDynamicSynth(noteChannel)
+		err := synth.StartSynth(noteChannel)
 		if err != nil {
 			fmt.Println(err.Error())
 		}
@@ -50,13 +50,13 @@ func main() {
 			return
 		}
 
-		na, err := filestore.LoadNoteArrangement("res/songs/test.json")
+		na, err := filestore.LoadNoteArrangement(os.Args[2])
 		if err != nil {
 			fmt.Println(err.Error())
 			return
 		}
 
-		err = synth.StartStaticSynth(na)
+		err = synth.StartSynthWith(na, noteChannel)
 		if err != nil {
 			fmt.Println(err.Error())
 		}

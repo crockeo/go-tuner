@@ -206,8 +206,8 @@ func DriverFunction(driver Driver, sampleRate int) func([][]float64) {
 	}
 }
 
-// Asynchronously running a synth.
-func RunSynthAsync(driver Driver, errChannel chan error, exitChannel chan bool) {
+// Running a synth server.
+func RunSynth(driver Driver, errChannel chan error, exitChannel chan bool) {
 	err := portaudio.Initialize()
 	if err != nil {
 		errChannel <- err
@@ -226,26 +226,4 @@ func RunSynthAsync(driver Driver, errChannel chan error, exitChannel chan bool) 
 	defer stream.Stop()
 
 	<-exitChannel
-}
-
-// Running a synth from a given Driver.
-func RunSynth(driver Driver) error {
-	err := portaudio.Initialize()
-	if err != nil {
-		return err
-	}
-	defer portaudio.Terminate()
-
-	stream, err := portaudio.OpenDefaultStream(0, 2, 44100, 0, DriverFunction(driver, 44100))
-	if err != nil {
-		return err
-	}
-	defer stream.Close()
-
-	stream.Start()
-	defer stream.Stop()
-
-	time.Sleep(driver.CalculateDuration() * time.Second)
-
-	return nil
 }
