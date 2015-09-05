@@ -62,5 +62,7 @@ func main() {
 		}
 	} else if os.Args[1] == "visualize" {
 		fmt.Println("Visualize not yet implemented.")
+	} else {
+		printHelp()
 	}
 }
