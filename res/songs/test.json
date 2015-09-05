@@ -1,0 +1,15 @@
+[
+    {
+        "delay": 0.0,
+        "note": "C3",
+        "duration": 1.0,
+        "instrument": "guitar"
+    },
+
+    {
+        "delay": 0.8,
+        "note": "D3",
+        "duration": 1.0,
+        "instrument", "guitar"
+    }
+]

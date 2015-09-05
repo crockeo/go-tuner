@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/crockeo/go-tuner/filestore"
 	"github.com/crockeo/go-tuner/server"
 	"github.com/crockeo/go-tuner/synth"
 	"os"
@@ -44,7 +45,21 @@ func main() {
 			fmt.Println(err.Error())
 		}
 	} else if os.Args[1] == "file" {
-		fmt.Println("File not yet implemented.")
+		if len(os.Args) != 3 {
+			printHelp()
+			return
+		}
+
+		na, err := filestore.LoadNoteArrangement("res/songs/test.json")
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+
+		err = synth.StartStaticSynth(na)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
 	} else if os.Args[1] == "visualize" {
 		fmt.Println("Visualize not yet implemented.")
 	}
