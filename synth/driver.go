@@ -174,7 +174,7 @@ func (pd *PrimaryDriver) CalculateOutput() []float32 {
 // Stepping the internal phases given a sample rate.
 func (pd *PrimaryDriver) StepPhases(sampleRate int) {
 	// Appending new notes to the set of current notes.
-	for len(pd.QueuedNotes) > 0 && pd.Time-pd.LastTime <= pd.QueuedNotes[0].Delay {
+	for len(pd.QueuedNotes) > 0 && pd.Time-pd.LastTime >= pd.QueuedNotes[0].Delay {
 		if config.DebugMode {
 			fmt.Print("Playing note: ")
 			fmt.Println(pd.QueuedNotes[0].ND)
@@ -186,7 +186,23 @@ func (pd *PrimaryDriver) StepPhases(sampleRate int) {
 		pd.LastTime = pd.Time
 	}
 
-	// TODO: Remove elements from CurrentNotes that are terminated.
+	// Deleting notes that should no longer exist.
+	indices := []int{}
+	for i, cn := range pd.CurrentNotes {
+		if pd.Time > cn.StartTime+cn.Note.Duration {
+			if config.DebugMode {
+				fmt.Print("Deleting note: ")
+				fmt.Println(cn.Note)
+			}
+
+			indices = append(indices, i)
+		}
+	}
+
+	deleted := 0
+	for _, i := range indices {
+		pd.CurrentNotes = append(pd.CurrentNotes[:i-deleted], pd.CurrentNotes[i-deleted+1:]...)
+	}
 
 	// Stepping the phases for the sub drivers.
 	for _, sd := range pd.CurrentNotes {
