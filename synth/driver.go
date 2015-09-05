@@ -5,11 +5,15 @@ import (
 	"github.com/HardWareGuy/portaudio-go"
 	"github.com/crockeo/go-tuner/config"
 	"math"
+	"time"
 )
 
 // Type Driver is an interface to define the required behavior for a data
 // structure that can be used in driving PortAudio music synthesis.
 type Driver interface {
+	// Calculating the time in seconds that this driver should be running.
+	CalculateDuration() time.Duration
+
 	// Getting the number of output channels this driver is expecting.
 	OutputChannels() int
 
@@ -51,6 +55,11 @@ func NewSingleDriverChild(nd NoteData, startTime float64) *SingleDriver {
 	sd.StartTime = startTime
 
 	return sd
+}
+
+// Calculating the time in seconds that this driver should be running.
+func (sd *SingleDriver) CalculateDuration() time.Duration {
+	return time.Duration(sd.Note.Duration)
 }
 
 // Getting the number of output channels this driver is expecting.
@@ -111,6 +120,25 @@ func NewPrimaryDriverEmpty() *PrimaryDriver {
 	pd.LastTime = 0.0
 
 	return pd
+}
+
+// Calculating the time in seconds that this driver should be running.
+func (pd *PrimaryDriver) CalculateDuration() time.Duration {
+	var delay, max float64
+
+	delay = 0
+	max = 0
+
+	for _, qn := range pd.QueuedNotes {
+		delay += qn.Delay
+		v := delay + qn.ND.Duration
+
+		if v > max {
+			max = v
+		}
+	}
+
+	return time.Duration(max)
 }
 
 // Trying to add a new DelayedNoteData to the list of queued notes inside of a
@@ -180,20 +208,44 @@ func DriverFunction(driver Driver, sampleRate int) func([][]float64) {
 
 // Asynchronously running a synth.
 func RunSynthAsync(driver Driver, errChannel chan error, exitChannel chan bool) {
-	portaudio.Initialize()
+	err := portaudio.Initialize()
+	if err != nil {
+		errChannel <- err
+		<-exitChannel
+	}
 	defer portaudio.Terminate()
 
-	// TODO: Rest of this stuff.
+	stream, err := portaudio.OpenDefaultStream(0, 2, 44100, 0, DriverFunction(driver, 44100))
+	if err != nil {
+		errChannel <- err
+		<-exitChannel
+	}
+	defer stream.Close()
+
+	stream.Start()
+	defer stream.Stop()
 
 	<-exitChannel
 }
 
 // Running a synth from a given Driver.
 func RunSynth(driver Driver) error {
-	portaudio.Initialize()
+	err := portaudio.Initialize()
+	if err != nil {
+		return err
+	}
 	defer portaudio.Terminate()
 
-	// TODO: Rest of this stuff.
+	stream, err := portaudio.OpenDefaultStream(0, 2, 44100, 0, DriverFunction(driver, 44100))
+	if err != nil {
+		return err
+	}
+	defer stream.Close()
+
+	stream.Start()
+	defer stream.Stop()
+
+	time.Sleep(driver.CalculateDuration() * time.Second)
 
 	return nil
 }
