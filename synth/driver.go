@@ -1,7 +1,9 @@
 package synth
 
 import (
+	"fmt"
 	"github.com/HardWareGuy/portaudio-go"
+	"github.com/crockeo/go-tuner/config"
 	"math"
 )
 
@@ -114,7 +116,16 @@ func NewPrimaryDriverEmpty() *PrimaryDriver {
 // Trying to add a new DelayedNoteData to the list of queued notes inside of a
 // PrimaryDriver.
 func (pd *PrimaryDriver) AddDelayedNote(dnd DelayedNoteData) {
+	if config.DebugMode {
+		fmt.Print("Adding note: ")
+		fmt.Println(dnd.ND)
+	}
 
+	if len(pd.QueuedNotes) == 0 {
+		pd.LastTime = pd.Time
+	}
+
+	pd.QueuedNotes = append(pd.QueuedNotes, dnd)
 }
 
 // Getting the number of output channels this driver is expecting.
@@ -131,6 +142,11 @@ func (pd *PrimaryDriver) CalculateOutput() []float64 {
 func (pd *PrimaryDriver) StepPhases(sampleRate int) {
 	// Appending new notes to the set of current notes.
 	for pd.Time-pd.LastTime <= pd.QueuedNotes[0].Delay {
+		if config.DebugMode {
+			fmt.Print("Playing note: ")
+			fmt.Println(pd.QueuedNotes[0].ND)
+		}
+
 		pd.CurrentNotes = append(pd.CurrentNotes, NewSingleDriverChild(pd.QueuedNotes[0].ND, pd.Time))
 		pd.QueuedNotes = pd.QueuedNotes[1:]
 
