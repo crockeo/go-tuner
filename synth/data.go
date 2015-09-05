@@ -228,7 +228,7 @@ type DelayedNoteData struct {
 
 // Converting a []byte representation of a DelayedNoteData into a structured
 // piece of data.
-func (dnd DelayedNoteData) UnmarshalJSON(data []byte) error {
+func (dnd *DelayedNoteData) UnmarshalJSON(data []byte) error {
 	var rdnd rawDelayedNoteData
 
 	err := json.NewDecoder(bytes.NewBuffer(data)).Decode(&rdnd)

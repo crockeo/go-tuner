@@ -27,10 +27,9 @@ func StartSynthWith(na *NoteArrangement, noteChannel chan DelayedNoteData) error
 				exitChannel <- true
 				return err
 			}
+		case dnd := <-noteChannel:
+			pd.AddDelayedNote(dnd)
 		}
-
-		dnd := <-noteChannel
-		pd.AddDelayedNote(dnd)
 
 		time.Sleep(50 * time.Millisecond)
 	}
