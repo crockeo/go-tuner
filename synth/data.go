@@ -8,7 +8,7 @@ import (
 
 var (
 	// The map from names of notes to their frequencies.
-	notes = map[string]float64{
+	notes = map[string]float32{
 		"C0":  16.35,
 		"C#0": 17.32,
 		"Db0": 17.32,
@@ -165,7 +165,7 @@ var (
 	}
 
 	// The map of names of instruments to their NoteData-generating functions.
-	instruments = map[string]func(float64, float64, float64) NoteData{
+	instruments = map[string]func(float32, float32, float32) NoteData{
 		"guitar": GuitarNote,
 	}
 )
@@ -173,28 +173,28 @@ var (
 // Type Overtone represents a relationship to a primary not that is some
 // multiplier on the note's frequency with a given volume.
 type Overtone struct {
-	Relation float64
-	Volume   float64
+	Relation float32
+	Volume   float32
 }
 
 // Type NoteData represents the information necessary to play a single note from
 // a given instrument.
 type NoteData struct {
-	Duration  float64
-	Volume    float64
-	Frequency float64
-	FadeFunc  func(float64, float64) float64
+	Duration  float32
+	Volume    float32
+	Frequency float32
+	FadeFunc  func(float32, float32) float32
 	Overtones []Overtone
 }
 
 // Creating a NoteData from a guitar note.
-func GuitarNote(duration, volume, frequency float64) NoteData {
+func GuitarNote(duration, volume, frequency float32) NoteData {
 	return NoteData{
 		Duration:  duration,
 		Volume:    volume,
 		Frequency: frequency,
 
-		FadeFunc: func(time, duration float64) float64 {
+		FadeFunc: func(time, duration float32) float32 {
 			return 1.0 - (time / duration)
 		},
 
@@ -213,16 +213,16 @@ func GuitarNote(duration, volume, frequency float64) NoteData {
 // Type rawDelayedNoteData is raw data from a message that can be converted into
 // DelayedNoteData after decoding its JSON.
 type rawDelayedNoteData struct {
-	Delay      float64 `json:"delay"`
+	Delay      float32 `json:"delay"`
 	Note       string  `json:"note"`
-	Duration   float64 `json:"duration"`
+	Duration   float32 `json:"duration"`
 	Instrument string  `json:"instrument"`
 }
 
 // Type DelayedNoteData is a container that houses the delay and the note data
 // for a given note.
 type DelayedNoteData struct {
-	Delay float64
+	Delay float32
 	ND    NoteData
 }
 
@@ -264,7 +264,7 @@ func EmptyNoteArrangement() *NoteArrangement {
 }
 
 // Adding a piece of NoteData to a NoteArrangement at a certain delay.
-func (na *NoteArrangement) AddNoteData(delay float64, nd NoteData) {
+func (na *NoteArrangement) AddNoteData(delay float32, nd NoteData) {
 	_ = append(*na, DelayedNoteData{
 		Delay: delay,
 		ND:    nd,

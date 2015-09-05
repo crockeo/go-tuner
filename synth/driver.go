@@ -18,7 +18,7 @@ type Driver interface {
 	OutputChannels() int
 
 	// Calculating the output on whatever set of channels for a given driver.
-	CalculateOutput() []float64
+	CalculateOutput() []float32
 
 	// Stepping the internal phases given a sample rate.
 	StepPhases(int)
@@ -27,9 +27,9 @@ type Driver interface {
 // The driver to play a single note for a given duration.
 type SingleDriver struct {
 	Note      NoteData // The data for this note.
-	Phase     float64  // The current phase of the driver.
-	Time      float64  // The current time of the SingleDriver.
-	StartTime float64  // The time this driver was started - if used without a PrimaryDriver it will always be 0.
+	Phase     float32  // The current phase of the driver.
+	Time      float32  // The current time of the SingleDriver.
+	StartTime float32  // The time this driver was started - if used without a PrimaryDriver it will always be 0.
 }
 
 // Creating a new SingleDriver from a given NoteData.
@@ -46,7 +46,7 @@ func NewSingleDriver(nd NoteData) *SingleDriver {
 
 // Creating a new SingleDriver to be used as a player inside of a PrimaryDriver
 // from a given NoteData.
-func NewSingleDriverChild(nd NoteData, startTime float64) *SingleDriver {
+func NewSingleDriverChild(nd NoteData, startTime float32) *SingleDriver {
 	sd := new(SingleDriver)
 
 	sd.Note = nd
@@ -68,10 +68,10 @@ func (sd *SingleDriver) OutputChannels() int {
 }
 
 // Calculating the output on whatever set of channels for a given driver.
-func (sd *SingleDriver) CalculateOutput() []float64 {
-	output := math.Sin(sd.Phase) * sd.Note.Volume * sd.Note.FadeFunc(sd.Time-sd.StartTime, sd.Note.Duration)
+func (sd *SingleDriver) CalculateOutput() []float32 {
+	output := float32(math.Sin(float64(sd.Phase))) * sd.Note.Volume * sd.Note.FadeFunc(sd.Time-sd.StartTime, sd.Note.Duration)
 
-	outputs := make([]float64, sd.OutputChannels())
+	outputs := make([]float32, sd.OutputChannels())
 	for k, _ := range outputs {
 		outputs[k] = output
 	}
@@ -81,12 +81,12 @@ func (sd *SingleDriver) CalculateOutput() []float64 {
 
 // Stepping the internal phases given a sample rate.
 func (sd *SingleDriver) StepPhases(sampleRate int) {
-	sd.Phase += sd.Note.Frequency * (1 / float64(sampleRate))
+	sd.Phase += sd.Note.Frequency * (1 / float32(sampleRate))
 	if sd.Phase >= 2*math.Pi {
 		sd.Phase -= 2 * math.Pi
 	}
 
-	sd.Time += 1.0 / float64(sampleRate)
+	sd.Time += 1.0 / float32(sampleRate)
 }
 
 // The primary driver that is used by the rest of the program by default to
@@ -94,8 +94,8 @@ func (sd *SingleDriver) StepPhases(sampleRate int) {
 type PrimaryDriver struct {
 	QueuedNotes  []DelayedNoteData // The list of NoteDatas to add.
 	CurrentNotes []*SingleDriver   // The list of current SingleDrivers.
-	Time         float64           // The current time of the PrimaryDriver.
-	LastTime     float64           // The time that the last SingleDriver was added.
+	Time         float32           // The current time of the PrimaryDriver.
+	LastTime     float32           // The time that the last SingleDriver was added.
 }
 
 // Creating a PrimaryDriver from existent data.
@@ -124,7 +124,7 @@ func NewPrimaryDriverEmpty() *PrimaryDriver {
 
 // Calculating the time in seconds that this driver should be running.
 func (pd *PrimaryDriver) CalculateDuration() time.Duration {
-	var delay, max float64
+	var delay, max float32
 
 	delay = 0
 	max = 0
@@ -160,16 +160,21 @@ func (pd *PrimaryDriver) AddDelayedNote(dnd DelayedNoteData) {
 func (pd *PrimaryDriver) OutputChannels() int { return 2 }
 
 // Calculating the output on whatever set of channels for a given driver.
-func (pd *PrimaryDriver) CalculateOutput() []float64 {
-	v := 0.0
+func (pd *PrimaryDriver) CalculateOutput() []float32 {
+	vs := []float32{0.0, 0.0}
+	for _, sd := range pd.CurrentNotes {
+		for i, o := range sd.CalculateOutput() {
+			vs[i] += o
+		}
+	}
 
-	return []float64{v, v}
+	return vs
 }
 
 // Stepping the internal phases given a sample rate.
 func (pd *PrimaryDriver) StepPhases(sampleRate int) {
 	// Appending new notes to the set of current notes.
-	for pd.Time-pd.LastTime <= pd.QueuedNotes[0].Delay {
+	for len(pd.QueuedNotes) > 0 && pd.Time-pd.LastTime <= pd.QueuedNotes[0].Delay {
 		if config.DebugMode {
 			fmt.Print("Playing note: ")
 			fmt.Println(pd.QueuedNotes[0].ND)
@@ -188,13 +193,13 @@ func (pd *PrimaryDriver) StepPhases(sampleRate int) {
 		sd.StepPhases(sampleRate)
 	}
 
-	pd.Time += 1.0 / float64(sampleRate)
+	pd.Time += 1.0 / float32(sampleRate)
 }
 
 // Returning a function to drive music synthesis given a driver and a sample
 // rate.
-func DriverFunction(driver Driver, sampleRate int) func([][]float64) {
-	return func(out [][]float64) {
+func DriverFunction(driver Driver, sampleRate int) func([][]float32) {
+	return func(out [][]float32) {
 		for i := range out[0] {
 			output := driver.CalculateOutput()
 			for j := range output {
