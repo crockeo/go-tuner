@@ -20,7 +20,7 @@ func handleTCPConnection(conn *net.TCPConn, noteChannel chan synth.DelayedNoteDa
 		}
 
 		if rlen > 0 {
-			strs := strings.Split(strings.TrimSpace(string(buffer[:2])), "\n")
+			strs := strings.Split(strings.TrimSpace(string(buffer)), "\n")
 			for _, v := range strs {
 				err = HandleMessage(v, noteChannel)
 				if err != nil {
