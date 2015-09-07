@@ -11,7 +11,7 @@ import (
 // Handling a particular TCP connection.
 func handleTCPConnection(conn *net.TCPConn, noteChannel chan synth.DelayedNoteData) {
 	defer conn.Close()
-	buffer := make([]byte, 512)
+	buffer := make([]byte, 256)
 	for {
 		rlen, err := conn.Read(buffer)
 		if err != nil {
@@ -29,7 +29,7 @@ func handleTCPConnection(conn *net.TCPConn, noteChannel chan synth.DelayedNoteDa
 			}
 		}
 
-		buffer = make([]byte, 64)
+		buffer = make([]byte, 256)
 		time.Sleep(10 * time.Millisecond)
 	}
 }

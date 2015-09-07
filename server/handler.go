@@ -3,6 +3,8 @@ package server
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"github.com/crockeo/go-tuner/config"
 	"github.com/crockeo/go-tuner/synth"
 )
 
@@ -25,6 +27,13 @@ func HandleMessage(str string, noteChannel chan synth.DelayedNoteData) error {
 	// the channel.
 	if len(str) > 0 && str[0] == '/' {
 		return nil
+	}
+
+	// If currently in config.DebugMode, print out the message that's currently
+	// being parsed.
+	if config.DebugMode {
+		fmt.Print("Parsing message: ")
+		fmt.Println(str)
 	}
 
 	dnd, err := ParseMessage(str)
