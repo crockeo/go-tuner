@@ -26,22 +26,10 @@ type Driver interface {
 
 // The driver to play a single note for a given duration.
 type SingleDriver struct {
-	Note      NoteData // The data for this note.
-	Phase     float32  // The current phase of the driver.
-	Time      float32  // The current time of the SingleDriver.
-	StartTime float32  // The time this driver was started - if used without a PrimaryDriver it will always be 0.
-}
-
-// Creating a new SingleDriver from a given NoteData.
-func NewSingleDriver(nd NoteData) *SingleDriver {
-	sd := new(SingleDriver)
-
-	sd.Note = nd
-	sd.Phase = 0
-	sd.Time = 0
-	sd.StartTime = 0
-
-	return sd
+	Note      NoteData  // The data for this note.
+	Phases    []float32 // The current phase of the driver.
+	Time      float32   // The current time of the SingleDriver.
+	StartTime float32   // The time this driver was started - if used without a PrimaryDriver it will always be 0.
 }
 
 // Creating a new SingleDriver to be used as a player inside of a PrimaryDriver
@@ -50,11 +38,21 @@ func NewSingleDriverChild(nd NoteData, startTime float32) *SingleDriver {
 	sd := new(SingleDriver)
 
 	sd.Note = nd
-	sd.Phase = 0
+
+	sd.Phases = make([]float32, len(nd.Overtones)+1)
+	for i := range sd.Phases {
+		sd.Phases[i] = 0
+	}
+
 	sd.Time = startTime
 	sd.StartTime = startTime
 
 	return sd
+}
+
+// Creating a new SingleDriver from a given NoteData.
+func NewSingleDriver(nd NoteData) *SingleDriver {
+	return NewSingleDriverChild(nd, 0)
 }
 
 // Calculating the time in seconds that this driver should be running.
@@ -69,11 +67,21 @@ func (sd *SingleDriver) OutputChannels() int {
 
 // Calculating the output on whatever set of channels for a given driver.
 func (sd *SingleDriver) CalculateOutput() []float32 {
-	output := float32(math.Sin(float64(sd.Phase))) * sd.Note.Volume * sd.Note.FadeFunc(sd.Time-sd.StartTime, sd.Note.Duration)
+	var sum float32 = 0
+	for i, phase := range sd.Phases {
+		var vol float32
+		if i == 0 {
+			vol = sd.Note.Volume
+		} else {
+			vol = sd.Note.Volume * sd.Note.Overtones[i-1].Volume
+		}
+
+		sum += float32(math.Sin(float64(phase))) * vol * sd.Note.FadeFunc(sd.Time-sd.StartTime, sd.Note.Duration)
+	}
 
 	outputs := make([]float32, sd.OutputChannels())
 	for k, _ := range outputs {
-		outputs[k] = output
+		outputs[k] = sum
 	}
 
 	return outputs
@@ -81,9 +89,18 @@ func (sd *SingleDriver) CalculateOutput() []float32 {
 
 // Stepping the internal phases given a sample rate.
 func (sd *SingleDriver) StepPhases(sampleRate int) {
-	sd.Phase += sd.Note.Frequency * (1 / float32(sampleRate))
-	if sd.Phase >= 2*math.Pi {
-		sd.Phase -= 2 * math.Pi
+	for i := range sd.Phases {
+		var freq float32
+		if i == 0 {
+			freq = sd.Note.Frequency
+		} else {
+			freq = sd.Note.Frequency * sd.Note.Overtones[i-1].Relation
+		}
+
+		sd.Phases[i] += 2 * math.Pi * (freq / float32(sampleRate))
+		if sd.Phases[i] >= 2*math.Pi {
+			sd.Phases[i] -= 2 * math.Pi
+		}
 	}
 
 	sd.Time += 1.0 / float32(sampleRate)
