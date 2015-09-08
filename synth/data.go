@@ -210,9 +210,9 @@ func GuitarNote(duration, volume, frequency float32) NoteData {
 	}
 }
 
-// Type rawDelayedNoteData is raw data from a message that can be converted into
+// Type RawDelayedNoteData is raw data from a message that can be converted into
 // DelayedNoteData after decoding its JSON.
-type rawDelayedNoteData struct {
+type RawDelayedNoteData struct {
 	Delay      float32 `json:"delay"`
 	Note       string  `json:"note"`
 	Duration   float32 `json:"duration"`
@@ -229,7 +229,7 @@ type DelayedNoteData struct {
 // Converting a []byte representation of a DelayedNoteData into a structured
 // piece of data.
 func (dnd *DelayedNoteData) UnmarshalJSON(data []byte) error {
-	var rdnd rawDelayedNoteData
+	var rdnd RawDelayedNoteData
 
 	err := json.NewDecoder(bytes.NewBuffer(data)).Decode(&rdnd)
 	if err != nil {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/crockeo/go-tuner/convert"
 	"github.com/crockeo/go-tuner/filestore"
 	"github.com/crockeo/go-tuner/server"
 	"github.com/crockeo/go-tuner/synth"
@@ -14,6 +15,7 @@ func printHelp() {
 	fmt.Println(" go-tuner server")
 	fmt.Println(" go-tuner file <file/path>")
 	fmt.Println(" go-tuner visualize <file/path>")
+	fmt.Println(" go-tuner convert <original/file/path> <new/file/path>")
 }
 
 // Handling er
@@ -56,12 +58,20 @@ func main() {
 			return
 		}
 
-		err = synth.StartSynthWith(na, noteChannel)
-		if err != nil {
+		if err = synth.StartSynthWith(na, noteChannel); err != nil {
 			fmt.Println(err.Error())
 		}
 	} else if os.Args[1] == "visualize" {
 		fmt.Println("Visualize not yet implemented.")
+	} else if os.Args[1] == "convert" {
+		if len(os.Args) != 4 {
+			printHelp()
+			return
+		}
+
+		if err := convert.ConvertFiles(os.Args[2], os.Args[3]); err != nil {
+			fmt.Println(err.Error())
+		}
 	} else {
 		printHelp()
 	}

@@ -1,0 +1,30 @@
+0.0 C3 0.8 guitar
+0.3 E3 0.8 guitar
+0.3 G3 0.8 guitar
+0.3 C3 0.8 guitar
+0.3 E3 0.8 guitar
+0.3 G3 0.8 guitar
+
+
+0.3 G2 0.8 guitar
+0.3 B2 0.8 guitar
+0.3 D3 0.8 guitar
+0.3 G2 0.8 guitar
+0.3 B2 0.8 guitar
+0.3 D3 0.8 guitar
+
+
+0.3 F2 0.8 guitar
+0.3 C3 0.8 guitar
+0.3 E3 0.8 guitar
+0.3 F2 0.8 guitar
+0.3 C3 0.8 guitar
+0.3 D3 0.8 guitar
+
+
+0.3 F2 0.8 guitar
+0.3 C3 0.8 guitar
+0.3 E3 0.8 guitar
+0.3 F2 0.8 guitar
+0.3 C3 0.8 guitar
+0.3 D3 0.8 guitar
