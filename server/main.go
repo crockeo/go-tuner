@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"github.com/crockeo/go-tuner/synth"
+	"io"
 	"net"
 	"strings"
 	"time"
@@ -14,13 +15,15 @@ func handleTCPConnection(conn *net.TCPConn, noteChannel chan synth.DelayedNoteDa
 	buffer := make([]byte, 256)
 	for {
 		rlen, err := conn.Read(buffer)
-		if err != nil {
+		if err == io.EOF {
+			return
+		} else if err != nil {
 			fmt.Println("Failed to read from TCP socket: " + err.Error())
 			return
 		}
 
 		if rlen > 0 {
-			strs := strings.Split(strings.TrimSpace(string(buffer)), "\n")
+			strs := strings.Split(strings.TrimSpace(string(buffer[:rlen])), "\n")
 			for _, v := range strs {
 				err = HandleMessage(v, noteChannel)
 				if err != nil {
@@ -30,7 +33,7 @@ func handleTCPConnection(conn *net.TCPConn, noteChannel chan synth.DelayedNoteDa
 		}
 
 		buffer = make([]byte, 256)
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(1 * time.Millisecond)
 	}
 }
 
