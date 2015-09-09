@@ -20,6 +20,9 @@ type Driver interface {
 	// Calculating the output on whatever set of channels for a given driver.
 	CalculateOutput() []float32
 
+	// Finding out if a driver is finished playing.
+	Finished() bool
+
 	// Stepping the internal phases given a sample rate.
 	StepPhases(int)
 }
@@ -85,6 +88,11 @@ func (sd *SingleDriver) CalculateOutput() []float32 {
 	}
 
 	return outputs
+}
+
+// Finding out if a driver is finished playing.
+func (sd *SingleDriver) Finished() bool {
+	return sd.Time-sd.StartTime > sd.Note.Duration
 }
 
 // Stepping the internal phases given a sample rate.
@@ -188,6 +196,21 @@ func (pd *PrimaryDriver) CalculateOutput() []float32 {
 	return vs
 }
 
+// Finding out if a driver is finished playing.
+func (pd *PrimaryDriver) Finished() bool {
+	if len(pd.QueuedNotes) > 0 {
+		return false
+	}
+
+	for _, sd := range pd.CurrentNotes {
+		if !sd.Finished() {
+			return false
+		}
+	}
+
+	return true
+}
+
 // Stepping the internal phases given a sample rate.
 func (pd *PrimaryDriver) StepPhases(sampleRate int) {
 	// Appending new notes to the set of current notes.
@@ -231,7 +254,7 @@ func (pd *PrimaryDriver) StepPhases(sampleRate int) {
 
 // Returning a function to drive music synthesis given a driver and a sample
 // rate.
-func DriverFunction(driver Driver, sampleRate int) func([][]float32) {
+func DriverFunction(driver Driver, sampleRate int, quitWhenDone bool, exitChannel chan bool) func([][]float32) {
 	return func(out [][]float32) {
 		for i := range out[0] {
 			output := driver.CalculateOutput()
@@ -240,12 +263,17 @@ func DriverFunction(driver Driver, sampleRate int) func([][]float32) {
 			}
 
 			driver.StepPhases(sampleRate)
+
+			if quitWhenDone && driver.Finished() {
+				exitChannel <- true
+				break
+			}
 		}
 	}
 }
 
 // Running a synth server.
-func RunSynth(driver Driver, errChannel chan error, exitChannel chan bool) {
+func RunSynth(driver Driver, errChannel chan error, quitWhenDone bool, exitChannel chan bool) {
 	err := portaudio.Initialize()
 	if err != nil {
 		errChannel <- err
@@ -253,7 +281,7 @@ func RunSynth(driver Driver, errChannel chan error, exitChannel chan bool) {
 	}
 	defer portaudio.Terminate()
 
-	stream, err := portaudio.OpenDefaultStream(0, 2, 44100, 0, DriverFunction(driver, 44100))
+	stream, err := portaudio.OpenDefaultStream(0, 2, 44100, 0, DriverFunction(driver, 44100, quitWhenDone, exitChannel))
 	if err != nil {
 		errChannel <- err
 		<-exitChannel

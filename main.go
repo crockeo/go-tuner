@@ -58,7 +58,7 @@ func main() {
 			return
 		}
 
-		if err = synth.StartSynthWith(na, noteChannel); err != nil {
+		if err = synth.StartSynthWith(na, noteChannel, true); err != nil {
 			fmt.Println(err.Error())
 		}
 	} else if os.Args[1] == "visualize" {
