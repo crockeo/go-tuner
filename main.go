@@ -6,6 +6,7 @@ import (
 	"github.com/crockeo/go-tuner/filestore"
 	"github.com/crockeo/go-tuner/server"
 	"github.com/crockeo/go-tuner/synth"
+	"github.com/crockeo/go-tuner/visualize"
 	"os"
 )
 
@@ -62,7 +63,9 @@ func main() {
 			fmt.Println(err.Error())
 		}
 	} else if os.Args[1] == "visualize" {
-		fmt.Println("Visualize not yet implemented.")
+		if err := visualize.Testing(); err != nil {
+			fmt.Println("Visualize error: " + err.Error())
+		}
 	} else if os.Args[1] == "convert" {
 		if len(os.Args) != 4 {
 			printHelp()
