@@ -7,6 +7,8 @@ import (
 	"github.com/go-gl/gl/v3.3-core/gl"
 	"image"
 	"image/draw"
+	_ "image/jpeg"
+	_ "image/png"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -30,7 +32,7 @@ func LoadShader(path string, shaderType uint32) (Shader, error, bool) {
 	if err != nil {
 		return 0, err, false
 	}
-	content := gl.Str(string(contentBytes))
+	content := gl.Str(string(contentBytes) + "\x00")
 
 	// Creating and compiling the shader.
 	shader := gl.CreateShader(shaderType)
@@ -111,7 +113,7 @@ func LoadShaderProgram(path string) (ShaderProgram, error) {
 		return 0, errors.New("Shader program failed to link: " + log)
 	}
 
-	return 0, errors.New("LoadShaderProgram not yet implemented.")
+	return ShaderProgram(program), nil
 }
 
 // Attempting to load a Texture from a given location on the disk.

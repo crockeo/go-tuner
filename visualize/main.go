@@ -43,12 +43,12 @@ func Testing() error {
 	fmt.Println("Running on OpenGL: " + version)
 
 	// Testing loading ShaderPrograms and Textures.
-	_, err = LoadShaderProgram("res/shader/test")
+	_, err = LoadShaderProgram("res/shaders/texrenderer")
 	if err != nil {
 		fmt.Println("LSP: " + err.Error())
 	}
 
-	_, err = LoadTexture("res/textures/test.png")
+	_, err = LoadTexture("res/textures/texture.jpg")
 	if err != nil {
 		fmt.Println("LT: " + err.Error())
 	}
