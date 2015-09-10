@@ -42,18 +42,36 @@ func Testing() error {
 	version := gl.GoStr(gl.GetString(gl.VERSION))
 	fmt.Println("Running on OpenGL: " + version)
 
-	// Testing loading ShaderPrograms and Textures.
-	_, err = LoadShaderProgram("res/shaders/texrenderer")
+	// Testing rendering of objects.
+	shaderProgram, err := LoadShaderProgram("res/shaders/texrenderer")
 	if err != nil {
 		fmt.Println("LSP: " + err.Error())
 	}
+	defer DestroyShaderProgram(shaderProgram)
 
-	_, err = LoadTexture("res/textures/texture.jpg")
+	texture, err := LoadTexture("res/textures/texture.jpg")
 	if err != nil {
 		fmt.Println("LT: " + err.Error())
 	}
+	defer DestroyTexture(texture)
 
+	renderObject := CreateRenderObject(shaderProgram, texture, []float32{
+		-0.5, -0.5,
+		0.5, -0.5,
+		-0.5, 0.5,
+		-0.5, 0.5,
+		0.5, -0.5,
+		0.5, 0.5,
+	})
+	defer renderObject.Destroy()
+
+	gl.ClearColor(1.0, 1.0, 1.0, 1.0)
 	for !window.ShouldClose() {
+		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
+		renderObject.Render()
+
+		window.SwapBuffers()
 		glfw.PollEvents()
 		time.Sleep(10 * time.Millisecond)
 	}

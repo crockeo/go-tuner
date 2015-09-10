@@ -100,6 +100,11 @@ func LoadShaderProgram(path string) (ShaderProgram, error) {
 	}
 	gl.LinkProgram(program)
 
+	// Destroying the shaders after linking.
+	for _, shader := range shaders {
+		gl.DeleteShader(shader)
+	}
+
 	// Checking that it linked correctly.
 	var linked int32
 	gl.GetProgramiv(program, gl.LINK_STATUS, &linked)
@@ -114,6 +119,11 @@ func LoadShaderProgram(path string) (ShaderProgram, error) {
 	}
 
 	return ShaderProgram(program), nil
+}
+
+// Destroying a ShaderProgram.
+func DestroyShaderProgram(shaderProgram ShaderProgram) {
+	gl.DeleteProgram(uint32(shaderProgram))
 }
 
 // Attempting to load a Texture from a given location on the disk.
@@ -160,4 +170,10 @@ func LoadTexture(path string) (Texture, error) {
 		gl.Ptr(rgba.Pix))
 
 	return Texture(texture), nil
+}
+
+// Destroying a Texture.
+func DestroyTexture(texture Texture) {
+	iTexture := uint32(texture)
+	gl.DeleteTextures(1, &iTexture)
 }
