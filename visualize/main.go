@@ -56,12 +56,10 @@ func Testing() error {
 	defer DestroyTexture(texture)
 
 	renderObject := CreateRenderObject(shaderProgram, texture, []float32{
-		-0.5, -0.5,
-		0.5, -0.5,
-		-0.5, 0.5,
-		-0.5, 0.5,
-		0.5, -0.5,
-		0.5, 0.5,
+		-0.5, -0.5, 0.0, 0.0,
+		0.5, -0.5, 1.0, 0.0,
+		0.5, 0.5, 1.0, 1.0,
+		-0.5, 0.5, 0.0, 1.0,
 	})
 	defer renderObject.Destroy()
 
@@ -70,6 +68,12 @@ func Testing() error {
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 		renderObject.Render()
+
+		// Reporting OpenGL errors.
+		glErr := gl.GetError()
+		if glErr != gl.NO_ERROR {
+			fmt.Printf("OpenGL error: %d\n", glErr)
+		}
 
 		window.SwapBuffers()
 		glfw.PollEvents()
