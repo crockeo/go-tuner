@@ -4,8 +4,14 @@ import (
 	"fmt"
 	"github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
+	"runtime"
 	"time"
 )
+
+// Initializing the source file.
+func init() {
+	runtime.LockOSThread()
+}
 
 // Testing stuff to do with opening an OpenGL context.
 func Testing() error {
@@ -35,6 +41,17 @@ func Testing() error {
 
 	version := gl.GoStr(gl.GetString(gl.VERSION))
 	fmt.Println("Running on OpenGL: " + version)
+
+	// Testing loading ShaderPrograms and Textures.
+	_, err = LoadShaderProgram("res/shader/test")
+	if err != nil {
+		fmt.Println("LSP: " + err.Error())
+	}
+
+	_, err = LoadTexture("res/textures/test.png")
+	if err != nil {
+		fmt.Println("LT: " + err.Error())
+	}
 
 	for !window.ShouldClose() {
 		glfw.PollEvents()
