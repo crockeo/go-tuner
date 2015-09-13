@@ -5,6 +5,7 @@ import (
 	"github.com/crockeo/go-tuner/config"
 	"github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
+	"math"
 	"runtime"
 	"time"
 )
@@ -79,12 +80,31 @@ func Testing() error {
 	})
 	defer lineRender.Destroy()
 
+	// Creating a 2nd LineRender from DefaultGenerateSinePoints.
+	var phase float32 = 0
+	lineRender2 := NewLineRender(
+		lineShader,
+		Color{1.0, 0.0, 0.0, 1.0},
+		false,
+		1.0,
+		DefaultGenerateSinePoints(440, phase))
+	defer lineRender2.Destroy()
+
 	gl.ClearColor(1.0, 1.0, 1.0, 1.0)
 	for !window.ShouldClose() {
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
+		// Rendering the outputs.
 		renderObject.Render()
 		lineRender.Render()
+		lineRender2.Render()
+
+		// Updating render for lineRender2.
+		phase += 2 * math.Pi * (440.0 / 44100.0)
+		if phase > 2*math.Pi {
+			phase -= 2 * math.Pi
+		}
+		lineRender2.UpdatePoints(DefaultGenerateSinePoints(440, phase))
 
 		if config.DebugMode {
 			// Reporting OpenGL errors.
