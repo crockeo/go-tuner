@@ -2,6 +2,7 @@ package visualize
 
 import (
 	"fmt"
+	"github.com/crockeo/go-tuner/config"
 	"github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
 	"runtime"
@@ -39,8 +40,10 @@ func Testing() error {
 		return err
 	}
 
-	version := gl.GoStr(gl.GetString(gl.VERSION))
-	fmt.Println("Running on OpenGL: " + version)
+	if config.DebugMode {
+		version := gl.GoStr(gl.GetString(gl.VERSION))
+		fmt.Println("Running on OpenGL: " + version)
+	}
 
 	// Testing rendering of objects.
 	shaderProgram, err := LoadShaderProgram("res/shaders/texrenderer")
@@ -56,23 +59,39 @@ func Testing() error {
 	defer DestroyTexture(texture)
 
 	renderObject := CreateRenderObject(shaderProgram, texture, []float32{
-		-0.5, -0.5, 0.0, 0.0,
-		0.5, -0.5, 1.0, 0.0,
-		0.5, 0.5, 1.0, 1.0,
-		-0.5, 0.5, 0.0, 1.0,
+		-1.0, -1.0, 0.0, 0.0,
+		1.0, -1.0, 1.0, 0.0,
+		1.0, 1.0, 1.0, 1.0,
+		-1.0, 1.0, 0.0, 1.0,
 	})
 	defer renderObject.Destroy()
+
+	// Testing a LineRender.
+	lineShader, err := LoadShaderProgram("res/shaders/lineshader")
+	if err != nil {
+		fmt.Println("LSP: " + err.Error())
+	}
+	defer DestroyShaderProgram(lineShader)
+
+	lineRender := NewLineRender(lineShader, Color{0.0, 0.0, 0.0, 1.0}, true, 1.0, []Point{
+		Point{-1.0, 0},
+		Point{1.0, 0},
+	})
+	defer lineRender.Destroy()
 
 	gl.ClearColor(1.0, 1.0, 1.0, 1.0)
 	for !window.ShouldClose() {
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 		renderObject.Render()
+		lineRender.Render()
 
-		// Reporting OpenGL errors.
-		glErr := gl.GetError()
-		if glErr != gl.NO_ERROR {
-			fmt.Printf("OpenGL error: %d\n", glErr)
+		if config.DebugMode {
+			// Reporting OpenGL errors.
+			glErr := gl.GetError()
+			if glErr != gl.NO_ERROR {
+				fmt.Printf("OpenGL error: %d\n", glErr)
+			}
 		}
 
 		window.SwapBuffers()

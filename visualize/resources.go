@@ -49,7 +49,7 @@ func LoadShader(path string, shaderType uint32) (Shader, error, bool) {
 		log := strings.Repeat("\x00", int(length+1))
 		gl.GetShaderInfoLog(shader, length, nil, gl.Str(log))
 
-		return 0, errors.New("Shader failed to compile: " + err.Error()), true
+		return 0, errors.New("Shader failed to compile: " + log), true
 	}
 
 	return Shader(shader), nil, false
