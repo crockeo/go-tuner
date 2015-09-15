@@ -74,11 +74,23 @@ func Testing() error {
 	}
 	defer DestroyShaderProgram(lineShader)
 
-	lineRender := NewLineRender(lineShader, Color{0.0, 0.0, 0.0, 1.0}, true, 1.0, []Point{
-		Point{-1.0, 0},
-		Point{1.0, 0},
-	})
-	defer lineRender.Destroy()
+	lineRenders := []*LineRender{
+		NewLineRender(lineShader, Color{0.0, 0.0, 0.0, 1.0}, true, 1.0, []Point{
+			Point{-1.0, 0},
+			Point{1.0, 0},
+		}),
+
+		NewLineRender(lineShader, Color{1.0, 0.0, 1.0, 1.0}, true, 1.0, []Point{
+			Point{-0.5, -0.5},
+			Point{0.5, 0.5},
+			Point{1, 0},
+		}),
+	}
+	defer func() {
+		for _, lr := range lineRenders {
+			lr.Destroy()
+		}
+	}()
 
 	// Creating a 2nd LineRender from DefaultGenerateSinePoints.
 	var phase float32 = 0
@@ -96,7 +108,9 @@ func Testing() error {
 
 		// Rendering the outputs.
 		renderObject.Render()
-		lineRender.Render()
+		for _, lr := range lineRenders {
+			lr.Render()
+		}
 		lineRender2.Render()
 
 		// Updating render for lineRender2.

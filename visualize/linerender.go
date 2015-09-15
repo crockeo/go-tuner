@@ -130,5 +130,5 @@ func (lr *LineRender) Render() {
 	gl.LineWidth(lr.weight)
 
 	// Performing the render.
-	gl.DrawElements(gl.LINES, lr.points, gl.UNSIGNED_INT, nil)
+	gl.DrawElements(gl.LINE_STRIP, lr.points, gl.UNSIGNED_INT, nil)
 }
