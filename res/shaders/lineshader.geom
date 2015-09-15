@@ -1,14 +1,14 @@
 #version 330
 
 // Width in pixels of the desired lines.
-#define THICKNESS 50
+#define THICKNESS 5
 
 // The size of the window relative to the viewpoint.
 #define SCALE vec2(640, 480)
 
 // Declaring the input and output layouts.
 layout(lines) in;
-layout(triangle_strip, max_vertices=256) out;
+layout(triangle_strip, max_vertices=4) out;
 
 // Converting a vector to a magnitude / angle pair.
 vec2 toMagAnglePair(vec2 vec) {
