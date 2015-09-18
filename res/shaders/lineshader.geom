@@ -6,6 +6,9 @@
 // The size of the window relative to the viewpoint.
 #define SCALE vec2(640, 480)
 
+// A definition of PI.
+#define M_PI 3.14159
+
 // Declaring the input and output layouts.
 layout(lines) in;
 layout(triangle_strip, max_vertices=4) out;
@@ -15,7 +18,7 @@ vec2 toMagAnglePair(vec2 vec) {
     vec2 pair;
 
     pair.x = sqrt(pow(vec.x, 2) + pow(vec.y, 2));
-    pair.y = atan(vec.y / vec.x);
+    pair.y = atan(vec.y, vec.x);
 
     return pair;
 }
@@ -36,12 +39,12 @@ void main() {
          dst = gl_in[1].gl_Position.xy;
 
     // Determining the offset (negative or positive) for the src and dst points.
-    vec2 calc = toMagAnglePair(abs(src - dst));
+    vec2 calc = toMagAnglePair(dst - src);
 
     calc.x = THICKNESS / 2;
 
-    vec2 off1 = toVector(vec2(calc.x, calc.y + 90)),
-         off2 = toVector(vec2(calc.x, calc.y - 90));
+    vec2 off1 = toVector(vec2(calc.x, calc.y + (M_PI / 2))),
+         off2 = toVector(vec2(calc.x, calc.y - (M_PI / 2)));
 
     off1 /= SCALE;
     off2 /= SCALE;
