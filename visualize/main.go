@@ -75,12 +75,12 @@ func Testing() error {
 	defer DestroyShaderProgram(lineShader)
 
 	lineRenders := []*LineRender{
-		NewLineRender(lineShader, Color{0.0, 0.0, 0.0, 1.0}, true, 1.0, []Point{
+		NewLineRender(lineShader, Color{0.0, 0.0, 0.0, 1.0}, true, 3.0, []Point{
 			Point{-1.0, 0},
 			Point{1.0, 0},
 		}),
 
-		NewLineRender(lineShader, Color{1.0, 0.0, 1.0, 1.0}, true, 1.0, []Point{
+		NewLineRender(lineShader, Color{1.0, 0.0, 1.0, 1.0}, true, 8.0, []Point{
 			Point{-0.5, -0.5},
 			Point{0.5, 0.5},
 			Point{1, 0},
@@ -98,7 +98,7 @@ func Testing() error {
 		lineShader,
 		Color{1.0, 0.0, 0.0, 1.0},
 		false,
-		1.0,
+		4.0,
 		DefaultGenerateSinePoints(440, phase))
 	defer lineRender2.Destroy()
 

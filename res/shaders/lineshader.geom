@@ -1,8 +1,5 @@
 #version 330
 
-// Width in pixels of the desired lines.
-#define THICKNESS 5
-
 // The size of the window relative to the viewpoint.
 #define SCALE vec2(640, 480)
 
@@ -12,6 +9,8 @@
 // Declaring the input and output layouts.
 layout(lines) in;
 layout(triangle_strip, max_vertices=4) out;
+
+uniform float in_thickness;
 
 // Converting a vector to a magnitude / angle pair.
 vec2 toMagAnglePair(vec2 vec) {
@@ -41,7 +40,7 @@ void main() {
     // Determining the offset (negative or positive) for the src and dst points.
     vec2 calc = toMagAnglePair(dst - src);
 
-    calc.x = THICKNESS / 2;
+    calc.x = in_thickness / 2;
 
     vec2 off1 = toVector(vec2(calc.x, calc.y + (M_PI / 2))),
          off2 = toVector(vec2(calc.x, calc.y - (M_PI / 2)));

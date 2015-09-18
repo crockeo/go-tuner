@@ -51,6 +51,7 @@ func NewLineRender(shaderProgram ShaderProgram, color Color, static bool, weight
 
 	// Setting the values non-changing values.
 	lr.shaderProgram = uint32(shaderProgram)
+	lr.color = color
 	lr.static = static
 	lr.weight = weight
 
@@ -116,6 +117,11 @@ func (lr *LineRender) Render() {
 	gl.EnableVertexAttribArray(vertAttrib)
 	gl.VertexAttribPointer(vertAttrib, 2, gl.FLOAT, false, 2*4, gl.PtrOffset(0))
 
+	// Line thickness information.
+	gl.Uniform1f(
+		gl.GetUniformLocation(lr.shaderProgram, gl.Str("in_thickness\x00")),
+		lr.weight)
+
 	// Fragment shader color information.
 	gl.Uniform4f(
 		gl.GetUniformLocation(lr.shaderProgram, gl.Str("in_color\x00")),
@@ -125,9 +131,6 @@ func (lr *LineRender) Render() {
 		lr.color.Alpha)
 
 	gl.BindFragDataLocation(lr.shaderProgram, 0, gl.Str("out_color\x00"))
-
-	// Setting the line weight.
-	gl.LineWidth(lr.weight)
 
 	// Performing the render.
 	gl.DrawElements(gl.LINE_STRIP, lr.points, gl.UNSIGNED_INT, nil)
