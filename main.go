@@ -63,9 +63,16 @@ func main() {
 			fmt.Println(err.Error())
 		}
 	} else if os.Args[1] == "visualize" {
+		quitChannel := make(chan bool)
+		defer close(quitChannel)
+
+		go synth.StartSynthAsync(noteChannel, quitChannel, errChannel)
+
 		if err := visualize.Testing(); err != nil {
 			fmt.Println("Visualize error: " + err.Error())
 		}
+
+		quitChannel <- true
 	} else if os.Args[1] == "convert" {
 		if len(os.Args) != 4 {
 			printHelp()
