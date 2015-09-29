@@ -1,9 +1,5 @@
 package synth
 
-import (
-	"time"
-)
-
 // The function to start a synth with the intent of being asynchronous WITH a
 // given slice of starting notes.
 //
@@ -46,10 +42,9 @@ func StartSynthAsyncWith(na *NoteArrangement, iNoteChannel chan DelayedNoteData,
 			if err != nil {
 				exitChannel <- true
 				oErrChannel <- err
+				return
 			}
 		}
-
-		time.Sleep(50 * time.Millisecond)
 	}
 }
 

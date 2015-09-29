@@ -60,5 +60,7 @@ func Start(errChannel chan error, noteChannel chan synth.DelayedNoteData) {
 		}
 
 		go handleTCPConnection(conn, noteChannel)
+
+		time.Sleep(1 * time.Millisecond)
 	}
 }
