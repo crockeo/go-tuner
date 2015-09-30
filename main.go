@@ -37,12 +37,14 @@ func main() {
 	}
 
 	errChannel := make(chan error, 8)
-	noteChannel := make(chan synth.DelayedNoteData, 32)
-
+	defer close(errChannel)
 	go handleErrors(errChannel)
-	go server.Start(errChannel, noteChannel)
 
 	if os.Args[1] == "server" {
+		noteChannel := make(chan synth.DelayedNoteData, 32)
+		defer close(noteChannel)
+		go server.Start(errChannel, noteChannel)
+
 		err := synth.StartSynth(noteChannel)
 		if err != nil {
 			fmt.Println(err.Error())
@@ -59,14 +61,14 @@ func main() {
 			return
 		}
 
-		if err = synth.StartSynthWith(na, noteChannel, true); err != nil {
+		if err = synth.StartSynthWith(na, make(chan synth.DelayedNoteData), true); err != nil {
 			fmt.Println(err.Error())
 		}
 	} else if os.Args[1] == "visualize" {
 		quitChannel := make(chan bool)
 		defer close(quitChannel)
 
-		go synth.StartSynthAsync(noteChannel, quitChannel, errChannel)
+		go synth.StartSynthAsync(make(chan synth.DelayedNoteData), quitChannel, errChannel)
 
 		if err := visualize.Testing(); err != nil {
 			fmt.Println("Visualize error: " + err.Error())
