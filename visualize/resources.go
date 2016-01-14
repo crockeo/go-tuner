@@ -177,3 +177,76 @@ func DestroyTexture(texture Texture) {
 	iTexture := uint32(texture)
 	gl.DeleteTextures(1, &iTexture)
 }
+
+// An amalgimation of assets one can use to
+type Assets struct {
+	Programs map[string]ShaderProgram
+	Textures map[string]Texture
+}
+
+// Constructing a new Assets out of the list of ShaderProgram paths and Texture
+// paths.
+func NewAssets(sPaths []string, tPaths []string) (*Assets, error) {
+	a := &Assets{
+		map[string]ShaderProgram{},
+		map[string]Texture{},
+	}
+
+	var err error
+	for _, v := range sPaths {
+		_, err = a.GetProgram(v)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	for _, v := range tPaths {
+		_, err = a.GetTexture(v)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return a, nil
+}
+
+// Accessing a program within the asset manager.
+func (a *Assets) GetProgram(path string) (ShaderProgram, error) {
+	if v, ok := a.Programs[path]; ok {
+		return v, nil
+	}
+
+	program, err := LoadShaderProgram(path)
+	if err != nil {
+		return 0, err
+	}
+
+	a.Programs[path] = program
+	return program, nil
+}
+
+// Accessing a texture within the asset manager.
+func (a *Assets) GetTexture(path string) (Texture, error) {
+	if v, ok := a.Textures[path]; ok {
+		return v, nil
+	}
+
+	texture, err := LoadTexture(path)
+	if err != nil {
+		return 0, err
+	}
+
+	a.Textures[path] = texture
+	return texture, nil
+}
+
+// Destroying the set of assets contained within an Assets.
+func (a *Assets) Destroy() {
+	for _, v := range a.Programs {
+		DestroyShaderProgram(v)
+	}
+
+	for _, v := range a.Textures {
+		DestroyTexture(v)
+	}
+}

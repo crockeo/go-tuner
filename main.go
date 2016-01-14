@@ -65,12 +65,23 @@ func main() {
 			fmt.Println(err.Error())
 		}
 	} else if os.Args[1] == "visualize" {
+		if len(os.Args) != 3 {
+			printHelp()
+			return
+		}
+
 		quitChannel := make(chan bool)
 		defer close(quitChannel)
 
-		go synth.StartSynthAsync(make(chan synth.DelayedNoteData), quitChannel, errChannel)
+		noteChannel := make(chan synth.DelayedNoteData, 32)
+		go synth.StartSynthAsync(noteChannel, quitChannel, errChannel)
 
-		if err := visualize.Testing(); err != nil {
+		na, err := filestore.LoadNoteArrangement(os.Args[2])
+		if err != nil {
+			fmt.Println("Could not load song: " + err.Error())
+		}
+
+		if err = visualize.RunVisualization(na, noteChannel); err != nil {
 			fmt.Println("Visualize error: " + err.Error())
 		}
 
