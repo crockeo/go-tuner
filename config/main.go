@@ -1,5 +1,5 @@
 package config
 
 const (
-	DebugMode bool = true // A global flag to give more debugging information.
+	DebugMode bool = false // A global flag to give more debugging information.
 )

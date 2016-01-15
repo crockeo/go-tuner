@@ -92,8 +92,8 @@ func main() {
 			return
 		}
 
-		if err := convert.ConvertFiles(os.Args[2], os.Args[3]); err != nil {
-			fmt.Println(err.Error())
+		if err := convert.ConvertAuto(os.Args[2], os.Args[3]); err != nil {
+			fmt.Println("Failed to convert files: " + err.Error())
 		}
 	} else {
 		printHelp()

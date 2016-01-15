@@ -1,88 +1,66 @@
 package convert
 
 import (
-	"bufio"
-	"encoding/json"
 	"errors"
-	"fmt"
-	"github.com/crockeo/go-tuner/synth"
-	"io"
 	"os"
-	"strings"
+	"path/filepath"
 )
 
-// Trying to parse DelayedNoteData out of a line.
-func parseNoteData(line string) (synth.RawDelayedNoteData, error) {
-	var delay float32
-	var note string
-	var duration float32
-	var instrument string
-
-	n, err := fmt.Sscan(strings.TrimSpace(line), &delay, &note, &duration, &instrument)
-	if n != 4 || err != nil {
-		fmt.Println(line)
-		return synth.RawDelayedNoteData{}, errors.New("Failed to parse line data.")
+// Given a string representing a file extension, attempt to map it to an
+// arrangement type.
+func DecideFormat(extension string) (ArrangementFormat, error) {
+	switch extension {
+	case ".json":
+		return JSONArrangement{}, nil
+	case ".midi":
+		return MIDIArrangement{}, nil
+	case ".txt":
+		return TextArrangement{}, nil
+	default:
+		return nil, errors.New("Undecidable extension.")
 	}
-
-	return synth.RawDelayedNoteData{
-		Delay:      delay,
-		Note:       note,
-		Duration:   duration,
-		Instrument: instrument,
-	}, nil
 }
 
-// Constructing a note arrangement from a file.
-func constructNoteArrangement(file *os.File) ([]synth.RawDelayedNoteData, error) {
-	na := []synth.RawDelayedNoteData{}
-	reader := bufio.NewReader(file)
+// Given a source path, destination path, and an arrangement type for both,
+// convert the source file's format into the destination file's format.
+func Convert(srcPath string, src ArrangementSource, dstPath string, dst ArrangementDestination) error {
+	srcFile, err := os.Open(srcPath)
+	if err != nil {
+		return err
+	}
+	defer srcFile.Close()
 
-	for {
-		line, err := reader.ReadString('\n')
-		if line == "\n" {
-			continue
-		} else if err == io.EOF {
-			break
-		} else if err != nil {
-			return []synth.RawDelayedNoteData{}, errors.New("Encountered an error while reading a line: " + err.Error())
-		}
+	dstFile, err := os.Create(dstPath)
+	if err != nil {
+		return err
+	}
+	defer dstFile.Close()
 
-		dnd, err := parseNoteData(line)
-		if err != nil {
-			return []synth.RawDelayedNoteData{}, errors.New("Failed to parse note data: " + err.Error())
-		}
-
-		na = append(na, dnd)
+	notes, err := src.ReadNoteArrangement(srcFile)
+	if err != nil {
+		return err
 	}
 
-	return na, nil
-}
-
-// Attempting to load in a file of the old format and write it out to the new
-// location in the new format.
-func ConvertFiles(from, to string) error {
-	source, err := os.Open(from)
+	err = dst.WriteNoteArrangement(dstFile, notes)
 	if err != nil {
-		return errors.New("Failed to open source file: " + err.Error())
-	}
-	defer source.Close()
-
-	na, err := constructNoteArrangement(source)
-	if err != nil {
-		return errors.New("Failed to construct note arrangement: " + err.Error())
-	}
-
-	dest, err := os.Create(to)
-	if err != nil {
-		return errors.New("Failed to open destination file: " + err.Error())
-	}
-	defer dest.Close()
-
-	enc := json.NewEncoder(dest)
-	err = enc.Encode(na)
-	if err != nil {
-		return errors.New("Failed to encode JSON: " + err.Error())
+		return err
 	}
 
 	return nil
+}
+
+// Similar to Convert, only that it tries to analyze the file extensions of the
+// srcPath and dstPath to decide which arrangement types to use.
+func ConvertAuto(srcPath string, dstPath string) error {
+	src, err := DecideFormat(filepath.Ext(srcPath))
+	if err != nil {
+		return err
+	}
+
+	dst, err := DecideFormat(filepath.Ext(dstPath))
+	if err != nil {
+		return err
+	}
+
+	return Convert(srcPath, src, dstPath, dst)
 }
