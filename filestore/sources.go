@@ -30,7 +30,7 @@ func DecideFormat(extension string) (ArrangementFormat, error) {
 	switch extension {
 	case ".json":
 		return JSONArrangement{}, nil
-	case ".midi":
+	case ".mid":
 		return MIDIArrangement{}, nil
 	case ".txt":
 		return TextArrangement{}, nil
