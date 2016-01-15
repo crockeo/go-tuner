@@ -1,29 +1,14 @@
 package convert
 
 import (
-	"errors"
+	"github.com/crockeo/go-tuner/filestore"
 	"os"
 	"path/filepath"
 )
 
-// Given a string representing a file extension, attempt to map it to an
-// arrangement type.
-func DecideFormat(extension string) (ArrangementFormat, error) {
-	switch extension {
-	case ".json":
-		return JSONArrangement{}, nil
-	case ".midi":
-		return MIDIArrangement{}, nil
-	case ".txt":
-		return TextArrangement{}, nil
-	default:
-		return nil, errors.New("Undecidable extension.")
-	}
-}
-
 // Given a source path, destination path, and an arrangement type for both,
 // convert the source file's format into the destination file's format.
-func Convert(srcPath string, src ArrangementSource, dstPath string, dst ArrangementDestination) error {
+func Convert(srcPath string, src filestore.ArrangementSource, dstPath string, dst filestore.ArrangementDestination) error {
 	srcFile, err := os.Open(srcPath)
 	if err != nil {
 		return err
@@ -52,12 +37,12 @@ func Convert(srcPath string, src ArrangementSource, dstPath string, dst Arrangem
 // Similar to Convert, only that it tries to analyze the file extensions of the
 // srcPath and dstPath to decide which arrangement types to use.
 func ConvertAuto(srcPath string, dstPath string) error {
-	src, err := DecideFormat(filepath.Ext(srcPath))
+	src, err := filestore.DecideFormat(filepath.Ext(srcPath))
 	if err != nil {
 		return err
 	}
 
-	dst, err := DecideFormat(filepath.Ext(dstPath))
+	dst, err := filestore.DecideFormat(filepath.Ext(dstPath))
 	if err != nil {
 		return err
 	}

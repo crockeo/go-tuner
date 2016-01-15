@@ -1,4 +1,4 @@
-package convert
+package filestore
 
 import (
 	"encoding/json"

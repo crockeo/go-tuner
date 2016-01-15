@@ -1,8 +1,6 @@
 package synth
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 )
 
@@ -226,30 +224,23 @@ type DelayedNoteData struct {
 	ND    NoteData
 }
 
-// Converting a []byte representation of a DelayedNoteData into a structured
-// piece of data.
-func (dnd *DelayedNoteData) UnmarshalJSON(data []byte) error {
-	var rdnd RawDelayedNoteData
-
-	err := json.NewDecoder(bytes.NewBuffer(data)).Decode(&rdnd)
-	if err != nil {
-		return err
-	}
-
+// Constructing a single piece of DelayedNoteData from its corresponding
+// RawDelayedNoteData.
+func MakeNoteData(rdnd RawDelayedNoteData) (DelayedNoteData, error) {
 	note, ok := notes[rdnd.Note]
 	if !ok {
-		return errors.New("Invalid note name.")
+		return DelayedNoteData{}, errors.New("Invalid note name: " + rdnd.Note)
 	}
 
 	instrument, ok := instruments[rdnd.Instrument]
 	if !ok {
-		return errors.New("Invalid instrument name.")
+		return DelayedNoteData{}, errors.New("Invalid instrument name: " + rdnd.Note)
 	}
 
-	dnd.Delay = rdnd.Delay
-	dnd.ND = instrument(rdnd.Duration, 1.0, note)
-
-	return nil
+	return DelayedNoteData{
+		rdnd.Delay,
+		instrument(rdnd.Duration, 1.0, note),
+	}, nil
 }
 
 // Type NoteArrangement is a synonym for an array of structs, one being the
@@ -263,10 +254,17 @@ func EmptyNoteArrangement() *NoteArrangement {
 	return na
 }
 
-// Adding a piece of NoteData to a NoteArrangement at a certain delay.
-func (na *NoteArrangement) AddNoteData(delay float32, nd NoteData) {
-	_ = append(*na, DelayedNoteData{
-		Delay: delay,
-		ND:    nd,
-	})
+// Creating a NoteArrangement from a []RawDelayedNoteData
+func MakeNoteArrangement(rdnds []RawDelayedNoteData) (*NoteArrangement, error) {
+	na := EmptyNoteArrangement()
+	for _, v := range rdnds {
+		dnd, err := MakeNoteData(v)
+		if err != nil {
+			return nil, err
+		}
+
+		*na = append(*na, dnd)
+	}
+
+	return na, nil
 }

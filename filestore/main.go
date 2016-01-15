@@ -1,25 +1,30 @@
 package filestore
 
 import (
-	"encoding/json"
 	"errors"
 	"github.com/crockeo/go-tuner/synth"
 	"os"
+	"path/filepath"
 )
 
-// Trying to load a synth.NoteArrangement from a file on the disk.
+// Loading a synth.NoteArrangement form a file on disk.
 func LoadNoteArrangement(path string) (*synth.NoteArrangement, error) {
-	if _, err := os.Stat(path); err != nil {
-		return nil, errors.New("File \"" + path + "\" does not exist.")
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, errors.New("Could not open \"" + path + "\".")
 	}
 
-	file, err := os.Open(path)
+	src, err := DecideFormat(filepath.Ext(path))
 	if err != nil {
 		return nil, err
 	}
 
-	na := new(synth.NoteArrangement)
-	err = json.NewDecoder(file).Decode(na)
+	rdnds, err := src.ReadNoteArrangement(file)
+	if err != nil {
+		return nil, err
+	}
+
+	na, err := synth.MakeNoteArrangement(rdnds)
 	if err != nil {
 		return nil, err
 	}
