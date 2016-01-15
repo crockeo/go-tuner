@@ -43,13 +43,17 @@ func (a TextArrangement) ReadNoteArrangement(reader io.Reader) ([]synth.RawDelay
 			line += string(bytes)
 		} else {
 			line += string(bytes)
-			note, err := parseLine(line)
-			if err != nil {
-				return []synth.RawDelayedNoteData{}, err
-			}
-			line = ""
 
-			notes = append(notes, note)
+			if line != "" && line[0] != '#' {
+				note, err := parseLine(line)
+				if err != nil {
+					return []synth.RawDelayedNoteData{}, err
+				}
+
+				notes = append(notes, note)
+			}
+
+			line = ""
 		}
 	}
 
