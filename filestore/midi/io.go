@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 )
@@ -207,6 +208,42 @@ func ReadEvent(reader io.Reader) (Event, bool, error) {
 			return Event{}, true, nil
 		}
 	default:
+		kind := b >> 4
+
+		switch kind {
+		case 0x8, 0x9:
+			key, err := readByte(reader)
+			if err != nil {
+				return Event{}, false, err
+			}
+
+			velocity, err := readByte(reader)
+			if err != nil {
+				return Event{}, false, err
+			}
+
+			return Event{
+				delay,
+				b == 0x9,
+				uint8(b & 0x0F),
+				uint8(key),
+				uint8(velocity),
+			}, false, nil
+		case 0xA, 0xB, 0xE:
+			bs := make([]byte, 2)
+			if _, err := reader.Read(bs); err != nil {
+				return Event{}, false, err
+			}
+
+			return Event{}, true, nil
+		case 0xC, 0xD:
+			bs := make([]byte, 1)
+			if _, err := reader.Read(bs); err != nil {
+				return Event{}, false, err
+			}
+
+			return Event{}, true, nil
+		}
 	}
 
 	if err != nil {
@@ -276,7 +313,8 @@ func ReadFile(path string) (*MIDI, error) {
 
 // Writing a MIDI structure out to some io.Writer.
 func (m *MIDI) Write(writer io.Writer) error {
-	return errors.New("Write not yet implemented.")
+	fmt.Println("Writing MIDI files is not yet supported.")
+	return nil
 }
 
 // Writing a MIDI structure out to a file location on disk. Opens a file and

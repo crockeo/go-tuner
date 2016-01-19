@@ -19,7 +19,11 @@ type Track []Event
 
 // A single MIDI event.
 type Event struct {
-	Delay int
+	Delay    int
+	Switch   bool
+	Channel  uint8
+	Key      uint8
+	Velocity uint8
 }
 
 // The entire structure of a MIDI file.
