@@ -77,6 +77,10 @@ func ReadChunk(reader io.Reader) (Chunk, error) {
 	convertBytes(lengthBytes, binary.BigEndian, &length)
 
 	dataBytes := make([]byte, length)
+	_, err = reader.Read(dataBytes)
+	if err != nil {
+		return Chunk{}, err
+	}
 
 	return Chunk{
 		string(titleBytes),
@@ -212,6 +216,8 @@ func ReadEvent(reader io.Reader) (Event, bool, error) {
 
 		switch kind {
 		case 0x8, 0x9:
+			s := kind == 0x9
+
 			key, err := readByte(reader)
 			if err != nil {
 				return Event{}, false, err
@@ -222,9 +228,14 @@ func ReadEvent(reader io.Reader) (Event, bool, error) {
 				return Event{}, false, err
 			}
 
+			if s && velocity == 0 {
+				s = false
+				velocity = 44
+			}
+
 			return Event{
 				delay,
-				b == 0x9,
+				s,
 				uint8(b & 0x0F),
 				uint8(key),
 				uint8(velocity),
@@ -277,7 +288,7 @@ func ReadTrack(reader io.Reader) (Track, error) {
 		track = append(track, event)
 	}
 
-	return Track{}, nil
+	return track, nil
 }
 
 // Constructing and returning a struct from the data contained in an io.Reader.
@@ -297,7 +308,10 @@ func Read(reader io.Reader) (*MIDI, error) {
 		tracks[i] = track
 	}
 
-	return nil, errors.New("Read not yet implemented")
+	return &MIDI{
+		header,
+		tracks,
+	}, nil
 }
 
 // Constructing and returning a struct from a file on disk.
