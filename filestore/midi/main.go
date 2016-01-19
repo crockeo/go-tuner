@@ -18,37 +18,9 @@ type Header struct {
 type Track []Event
 
 // A single MIDI event.
-type Event interface {
-	Delay() int
-	Kind() int
+type Event struct {
+	Delay int
 }
-
-// A MIDI event.
-type MIDIEvent struct {
-	Ticks int
-}
-
-func (me MIDIEvent) Delay() int { return me.Ticks }
-func (me MIDIEvent) Kind() int  { return 0 }
-
-// A sysex event.
-type SysexEvent struct {
-	Ticks  int
-	Escape bool
-	Data   []byte
-}
-
-func (se SysexEvent) Delay() int { return se.Ticks }
-func (se SysexEvent) Kind() int  { return 1 }
-
-// A meta event.
-type MetaEvent struct {
-	Ticks int
-	Type  int
-}
-
-func (me MetaEvent) Delay() int { return me.Ticks }
-func (me MetaEvent) Kind() int  { return 2 }
 
 // The entire structure of a MIDI file.
 type MIDI struct {

@@ -46,6 +46,19 @@ func readVarBytes(reader io.Reader) ([]byte, error) {
 	return bytes, nil
 }
 
+// Reading in a variable quantity int.
+func varInt(reader io.Reader) (int, error) {
+	vbs, err := readVarBytes(reader)
+	if err != nil {
+		return 0, err
+	}
+
+	var n int
+	convertBytes(vbs, binary.BigEndian, &n)
+
+	return n, nil
+}
+
 // Reading a chunk from a file.
 func ReadChunk(reader io.Reader) (Chunk, error) {
 	titleBytes := make([]byte, 4)
@@ -95,76 +108,112 @@ func ReadHeader(reader io.Reader) (Header, error) {
 }
 
 // Reading an event from in from a reader.
-func ReadEvent(reader io.Reader) (Event, error) {
-	// TODO:
-	//  1. Read in the delta_time.
-	//  2. Read in the event data.
-	//  3. Compile that into an event.
-
+func ReadEvent(reader io.Reader) (Event, bool, error) {
 	delayBytes, err := readVarBytes(reader)
 	if err != nil {
-		return nil, err
+		return Event{}, false, err
 	}
 	var delay int
 	convertBytes(delayBytes, binary.BigEndian, &delay)
 
 	b, err := readByte(reader)
 	if err != nil {
-		return nil, err
+		return Event{}, false, err
 	}
 
 	var e Event
 	switch b {
 	// Loading a sysex event.
 	case 0xF0, 0xF7:
-		lenBytes, err := readVarBytes(reader)
-		var len int
-		convertBytes(lenBytes, binary.BigEndian, &len)
+		len, err := varInt(reader)
+		if err != nil {
+			return Event{}, false, err
+		}
 
 		data := make([]byte, len)
 		_, err = reader.Read(data)
 		if err != nil {
-			return nil, err
+			return Event{}, false, err
 		}
 
-		return SysexEvent{
-			delay,
-			b == 0xF7,
-			data,
-		}, nil
+		return Event{}, true, nil
 	// Loading a meta event.
 	case 0xFF:
 		t, err := readByte(reader)
 		if err != nil {
-			return nil, err
+			return Event{}, false, err
 		}
 
 		switch t {
 		case 0x00:
-		case 0x01:
-		case 0x02:
-		case 0x03:
-		case 0x04:
-		case 0x05:
-		case 0x06:
-		case 0x07:
+			bs := make([]byte, 3)
+			_, err := reader.Read(bs)
+			if err != nil {
+				return Event{}, false, err
+			}
+		case 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x7F:
+			len, err := varInt(reader)
+			if err != nil {
+				return Event{}, false, err
+			}
+
+			bs := make([]byte, len)
+			if _, err := reader.Read(bs); err != nil {
+				return Event{}, false, err
+			}
+
+			return Event{}, true, nil
 		case 0x20:
+			bs := make([]byte, 2)
+			if _, err := reader.Read(bs); err != nil {
+				return Event{}, false, err
+			}
+
+			return Event{}, true, nil
 		case 0x2F:
+			bs := make([]byte, 1)
+			if _, err := reader.Read(bs); err != nil {
+				return Event{}, false, err
+			}
+
+			return Event{}, true, nil
 		case 0x51:
+			bs := make([]byte, 4)
+			if _, err := reader.Read(bs); err != nil {
+				return Event{}, false, err
+			}
+
+			return Event{}, true, nil
 		case 0x54:
+			bs := make([]byte, 6)
+			if _, err := reader.Read(bs); err != nil {
+				return Event{}, false, err
+			}
+
+			return Event{}, true, nil
 		case 0x58:
+			bs := make([]byte, 5)
+			if _, err := reader.Read(bs); err != nil {
+				return Event{}, false, err
+			}
+
+			return Event{}, true, nil
 		case 0x59:
-		case 0x7F:
+			bs := make([]byte, 3)
+			if _, err := reader.Read(bs); err != nil {
+				return Event{}, false, err
+			}
+
+			return Event{}, true, nil
 		}
 	default:
-		e, err = ReadMIDIEvent(reader, b)
 	}
 
 	if err != nil {
-		return nil, err
+		return Event{}, false, err
 	}
 
-	return e, nil
+	return e, false, nil
 }
 
 // Reading a given track in from a reader.
@@ -179,14 +228,12 @@ func ReadTrack(reader io.Reader) (Track, error) {
 	track := Track{}
 	buf := bytes.NewBuffer(chunk.Bytes)
 	for buf.Len() > 0 {
-		event, err := ReadEvent(buf)
+		event, skip, err := ReadEvent(buf)
 		if err != nil {
 			return Track{}, nil
 		}
 
-		// Event Kind != a MIDI sound event, either a sysex event or a meta
-		// event. Might re-add later, but it simplifies things.
-		if event.Kind() == 1 || event.Kind() == 2 {
+		if skip {
 			continue
 		}
 
