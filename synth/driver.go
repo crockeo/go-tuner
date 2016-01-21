@@ -226,22 +226,22 @@ func (pd *PrimaryDriver) StepPhases(sampleRate int) {
 		pd.LastTime = pd.Time
 	}
 
-	// Deleting notes that should no longer exist.
-	indices := []int{}
-	for i, cn := range pd.CurrentNotes {
-		if pd.Time > cn.StartTime+cn.Note.Duration {
-			if config.DebugMode {
-				fmt.Print("Deleting note: ")
-				fmt.Println(cn.Note)
-			}
-
-			indices = append(indices, i)
+	// Finding the last index of a note that should be deleted.
+	var sieve int
+	for sieve = -1; sieve < len(pd.CurrentNotes)-1; sieve++ {
+		n := pd.CurrentNotes[sieve+1]
+		if pd.Time < n.StartTime+n.Note.Duration {
+			break
 		}
 	}
 
-	deleted := 0
-	for _, i := range indices {
-		pd.CurrentNotes = append(pd.CurrentNotes[:i-deleted], pd.CurrentNotes[i-deleted+1:]...)
+	// Deleting everything before the sieve.
+	if sieve != -1 {
+		if config.DebugMode {
+			fmt.Printf("Removing to sieve: %d\n", sieve)
+		}
+
+		pd.CurrentNotes = pd.CurrentNotes[sieve+1:]
 	}
 
 	// Stepping the phases for the sub drivers.
