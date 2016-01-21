@@ -48,14 +48,16 @@ func readVarBytes(reader io.Reader) ([]byte, error) {
 }
 
 // Reading in a variable quantity int.
-func varInt(reader io.Reader) (int, error) {
+func varInt(reader io.Reader) (uint, error) {
 	vbs, err := readVarBytes(reader)
 	if err != nil {
 		return 0, err
 	}
 
-	var n int
-	convertBytes(vbs, binary.BigEndian, &n)
+	var n uint = 0
+	for _, b := range vbs {
+		n = (n << 7) + (uint(b) & 0x7F)
+	}
 
 	return n, nil
 }
@@ -114,12 +116,10 @@ func ReadHeader(reader io.Reader) (Header, error) {
 
 // Reading an event from in from a reader.
 func ReadEvent(reader io.Reader) (Event, bool, error) {
-	delayBytes, err := readVarBytes(reader)
+	delay, err := varInt(reader)
 	if err != nil {
 		return Event{}, false, err
 	}
-	var delay int
-	convertBytes(delayBytes, binary.BigEndian, &delay)
 
 	b, err := readByte(reader)
 	if err != nil {

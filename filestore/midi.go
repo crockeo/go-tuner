@@ -2,15 +2,89 @@ package filestore
 
 import (
 	"errors"
+	"fmt"
 	"github.com/crockeo/go-tuner/filestore/midi"
 	"github.com/crockeo/go-tuner/synth"
 	"io"
 )
 
+// Converting between a key (from MIDI input) and the corresponding string that
+// is used elsewhere in the program.
+func numToNote(key uint8) string {
+	octave := key / 12
+	note := key - (octave * 12)
+
+	var str string
+	switch note {
+	case 0:
+		str = "C"
+	case 1:
+		str = "C#"
+	case 2:
+		str = "D"
+	case 3:
+		str = "D#"
+	case 4:
+		str = "E"
+	case 5:
+		str = "F"
+	case 6:
+		str = "F#"
+	case 7:
+		str = "G"
+	case 8:
+		str = "G#"
+	case 9:
+		str = "A"
+	case 10:
+		str = "A#"
+	case 11:
+		str = "B"
+	}
+
+	return fmt.Sprintf("%s%d", str, octave)
+}
+
+// Converting a tick amount to a real time delay.
+func convertTick(division int16, delay uint) float32 {
+	switch division >> 15 {
+	case 0:
+		return 0.5 * (float32(delay) / float32(division&0x7FFF))
+	case 1:
+	default:
+		panic("convertTick defualt select - you shouldn't be able to get here.")
+	}
+
+	return 0.0
+}
+
 // Constructing a single []synth.RawDelayedNoteData from a MIDI track.
 func constructNoteArrangement(header midi.Header, track midi.Track) []synth.RawDelayedNoteData {
-	// TODO: Construct a []synth.RawDelayedNoteData from a track.
-	return []synth.RawDelayedNoteData{}
+	rdnds := []synth.RawDelayedNoteData{}
+
+	for i := 0; i < len(track); i++ {
+		t1 := track[i]
+
+		var diff uint = 0
+		for j := i + 1; j < len(track); j++ {
+			diff += track[j].Delay
+			if !track[j].Switch && track[j].Channel == t1.Channel && track[j].Key == t1.Key {
+				break
+			}
+		}
+
+		// TODO: Non-fixed note duration.
+
+		delay := convertTick(header.Division, t1.Delay)
+		rdnds = append(rdnds, synth.RawDelayedNoteData{
+			delay,
+			numToNote(t1.Key),
+			0.7, //(convertTick(header.Division, diff) - delay) + 0.25,
+			"guitar",
+		})
+	}
+
+	return rdnds
 }
 
 // Merging two []synth.RawDelayedNoteDatas together.
@@ -33,6 +107,8 @@ func mergeNoteArrangements(na1 []synth.RawDelayedNoteData, na2 []synth.RawDelaye
 
 			accum = append(accum, t)
 			na2 = na2[1:]
+
+			continue
 		}
 
 		// There are no more notes from na2 to append, so appending everything
@@ -48,9 +124,12 @@ func mergeNoteArrangements(na1 []synth.RawDelayedNoteData, na2 []synth.RawDelaye
 
 			accum = append(accum, t)
 			na2 = na2[1:]
+
+			continue
 		}
 
 		// Appending whichever note is going to happen soonest.
+		// TODO: This comment ^^^
 	}
 
 	return accum

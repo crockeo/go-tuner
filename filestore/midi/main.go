@@ -19,7 +19,7 @@ type Track []Event
 
 // A single MIDI event.
 type Event struct {
-	Delay    int
+	Delay    uint
 	Switch   bool
 	Channel  uint8
 	Key      uint8
