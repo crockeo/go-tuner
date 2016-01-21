@@ -129,7 +129,41 @@ func mergeNoteArrangements(na1 []synth.RawDelayedNoteData, na2 []synth.RawDelaye
 		}
 
 		// Appending whichever note is going to happen soonest.
-		// TODO: This comment ^^^
+		if side == 0 {
+			if na1[0].Delay < na2[0].Delay {
+				accum = append(accum, na1[0])
+				offset = na1[0].Delay
+				na1 = na1[1:]
+				side = 1
+			} else {
+				accum = append(accum, na2[0])
+				offset = na2[0].Delay
+				na2 = na2[1:]
+				side = 2
+			}
+		} else if side == 1 {
+			if na1[0].Delay < na2[0].Delay-offset {
+				accum = append(accum, na1[0])
+				offset += na1[0].Delay
+				na1 = na1[1:]
+			} else {
+				accum = append(accum, na2[0])
+				offset = na2[0].Delay
+				na2 = na2[1:]
+				side = 2
+			}
+		} else if side == 2 {
+			if na1[0].Delay-offset < na2[0].Delay {
+				accum = append(accum, na1[0])
+				offset = na1[0].Delay
+				na1 = na1[1:]
+				side = 1
+			} else {
+				accum = append(accum, na2[0])
+				offset += na2[0].Delay
+				na2 = na2[1:]
+			}
+		}
 	}
 
 	return accum
