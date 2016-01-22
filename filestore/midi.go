@@ -123,7 +123,7 @@ func mergeNoteArrangements(na1 []synth.RawDelayedNoteData, na2 []synth.RawDelaye
 			}
 
 			accum = append(accum, t)
-			na2 = na2[1:]
+			na1 = na1[1:]
 
 			continue
 		}
