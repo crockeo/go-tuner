@@ -1,0 +1,4 @@
+0.0 A2 5.0 guitar
+0.5 E2 1.0 guitar
+0.5 B2 4.0 guitar
+1.0 C3 3.0 guitar

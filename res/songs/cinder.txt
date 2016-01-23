@@ -1,0 +1,17 @@
+0.0 A2 1.5 guitar
+0.0 C4 1.5 guitar
+0.4 A3 1.5 guitar
+0.4 E3 1.5 guitar
+0.5 E4 2.5 guitar
+
+0.4 A3 1.5 guitar
+0.4 E3 1.5 guitar
+0.5 C4 1.5 guitar
+
+0.4 A3 1.5 guitar
+0.4 E3 1.5 guitar
+0.5 E4 2.5 guitar
+
+0.4 A3 2.5 guitar
+0.4 E3 2.5 guitar
+0.o C4 2.5 guitar
