@@ -254,6 +254,8 @@ func ReadEvent(reader io.Reader) (Event, bool, error) {
 			}
 
 			return Event{}, true, nil
+		default:
+			return Event{}, false, errors.New(fmt.Sprintf("Unrecognized note kind: 0x%X", kind))
 		}
 	}
 
@@ -278,7 +280,7 @@ func ReadTrack(reader io.Reader) (Track, error) {
 	for buf.Len() > 0 {
 		event, skip, err := ReadEvent(buf)
 		if err != nil {
-			return Track{}, nil
+			return Track{}, err
 		}
 
 		if skip {
