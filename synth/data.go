@@ -228,8 +228,9 @@ type DelayedNoteData struct {
 // RawDelayedNoteData.
 func MakeNoteData(rdnd RawDelayedNoteData) (DelayedNoteData, error) {
 	note, ok := notes[rdnd.Note]
-	if !ok {
-		return DelayedNoteData{}, errors.New("Invalid note name: " + rdnd.Note)
+	note, err := CalculateFrequencyStr(rdnd.Note)
+	if err != nil {
+		return DelayedNoteData{}, err
 	}
 
 	instrument, ok := instruments[rdnd.Instrument]

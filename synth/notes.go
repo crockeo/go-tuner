@@ -54,13 +54,20 @@ func NoteToInt(note string) (int, error) {
 		return 0, errors.New("Malformed note: " + note)
 	}
 
-	oct, err := strconv.ParseInt(note[len(note)-1:], 10, 0)
+	var edge int
+	for edge = 0; edge < len(note); edge++ {
+		if '0' <= note[edge] && note[edge] <= '9' {
+			break
+		}
+	}
+
+	oct, err := strconv.ParseInt(note[edge:], 10, 0)
 	if err != nil {
 		return 0, err
 	}
 
 	var n int
-	switch note[:len(note)-1] {
+	switch note[:edge] {
 	case "C":
 		n = 0
 	case "C#":
@@ -86,7 +93,7 @@ func NoteToInt(note string) (int, error) {
 	case "B":
 		n = 11
 	default:
-		return 0, errors.New("Invalid note name: " + note[:len(note)-1])
+		return 0, errors.New("Invalid note name: " + note[:edge])
 	}
 
 	return int(oct)*12 + n, nil
